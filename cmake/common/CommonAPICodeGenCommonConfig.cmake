@@ -79,22 +79,21 @@ endmacro()
 
 macro(get_generated_files_list VARIABLE_NAME deploymentFile codegenerators)
 
-    # Check if temporary location is to be used
-    if(USE_TEMPORARY_FIDL_LOCATION)
-        get_filename_component(DEPLOYMENT_FILE ${deploymentFile} NAME)
-        message("List Command : ${COMMONAPI_CODEGEN_COMMAND_LINE} -l -f ${CMAKE_CURRENT_BINARY_DIR}/${TEMPORARY_FILES_LOCATION}/${DEPLOYMENT_FILE} -o ${CMAKE_CURRENT_BINARY_DIR}/${COMMONAPI_GENERATED_FILES_LOCATION} ${codegenerators}")
-        execute_process(
-            COMMAND ${COMMONAPI_CODEGEN_COMMAND_LINE} -l -f ${CMAKE_CURRENT_BINARY_DIR}/${TEMPORARY_FILES_LOCATION}/${DEPLOYMENT_FILE} -o ${CMAKE_CURRENT_BINARY_DIR}/${COMMONAPI_GENERATED_FILES_LOCATION} ${codegenerators}
-            OUTPUT_VARIABLE ${VARIABLE_NAME} OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-    else(USE_TEMPORARY_FIDL_LOCATION)
-        message("List Command : ${COMMONAPI_CODEGEN_COMMAND_LINE} -l -f ${deploymentFile} -o ${CMAKE_CURRENT_BINARY_DIR}/${COMMONAPI_GENERATED_FILES_LOCATION} ${codegenerators}")
-        execute_process(
-            COMMAND ${COMMONAPI_CODEGEN_COMMAND_LINE} -l -f ${deploymentFile} -o ${CMAKE_CURRENT_BINARY_DIR}/${COMMONAPI_GENERATED_FILES_LOCATION} ${codegenerators}
-            OUTPUT_VARIABLE ${VARIABLE_NAME} OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-    endif(USE_TEMPORARY_FIDL_LOCATION)
+    # List of files to generate is populated based with the generator output
+    execute_process(
+        COMMAND ${COMMONAPI_CODEGEN_COMMAND_LINE} -l -f ${deploymentFile} -o ${CMAKE_CURRENT_BINARY_DIR}/${COMMONAPI_GENERATED_FILES_LOCATION} ${codegenerators}
+        OUTPUT_VARIABLE ${VARIABLE_NAME} OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
 
+    # Only keep .ccp files in list of generated files, and remove duplicates
+    foreach(loop_var ${${VARIABLE_NAME}})
+	if(${loop_var} MATCHES ".cpp$")
+		list(APPEND FILE_LIST ${loop_var})
+	endif()
+    endforeach(loop_var)
+    list(REMOVE_DUPLICATES FILE_LIST)
+
+    set(${VARIABLE_NAME} ${FILE_LIST})
     message(STATUS "List of generated files : ${${VARIABLE_NAME}}")
 endmacro()
 
